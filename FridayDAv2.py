@@ -11,6 +11,9 @@ from wikipedia.wikipedia import languages
 import tkinter as tk
 import tkinter.font as tkf
 import requests, json
+from gnewsclient import gnewsclient
+
+client = gnewsclient.NewsClient(language='english',location='india',max_results=3)
 
 engine = pyttsx3.init('sapi5')
 voices = engine.getProperty('voices')
@@ -112,6 +115,14 @@ def everything():
                 w.config(text = 'City Not Found')
                 w.update()
                 speak("City Not Found")
+                
+        elif 'news' in query:
+            news_list = client.get_news()
+            for item in news_list:
+                st = item['title'].split(' - ', 1)[0]
+                w.config(text = st)
+                w.update()
+                speak(st)
 
         elif 'play music' in query:
             folder = 'c:/AssistantSongs'
@@ -203,6 +214,9 @@ def everything():
                 speak("Could not open")
                 
         elif 'shutdown' in query:
+            w.config(text = 'Shutting Down')
+            w.update()
+            speak("Shutting Down")
             os.system("shutdown -s")            
 
         elif 'bye' in query:

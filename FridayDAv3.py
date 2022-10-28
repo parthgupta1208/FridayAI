@@ -5,20 +5,17 @@ import datetime
 import wikipedia
 import webbrowser
 import os
-import chatterbot
-from chatterbot.trainers import ChatterBotCorpusTrainer
 from wikipedia.wikipedia import languages
 import tkinter as tk
 import tkinter.font as tkf
 import requests, json
+from gnewsclient import gnewsclient
+
+client = gnewsclient.NewsClient(language='english',location='india',max_results=3)
 
 engine = pyttsx3.init('sapi5')
 voices = engine.getProperty('voices')
 engine.setProperty('voice', voices[1].id)
-
-bot = chatterbot.ChatBot('Friday')
-trainer = ChatterBotCorpusTrainer(bot)
-trainer.train("chatterbot.corpus.english.conversations","chatterbot.corpus.english.greetings","chatterbot.corpus.english.trivia","chatterbot.corpus.english.ai")
 
 api_key = "5995f5e32100e6a622ffb2f0d088cb02"
 base_url = "http://api.openweathermap.org/data/2.5/weather?"
@@ -51,6 +48,31 @@ def takeCommand():
     try:
         print("Friday : Recognizing ...")
         query = r.recognize_google(audio, language='en-in')
+        query=query.lower()
+
+    except Exception as e:
+        return "none"
+    
+    if 'friday' not in query:
+        return "none"
+    else:
+        query=query.replace("friday ","^")
+        query=query.replace("friday","^")
+        return query
+
+def takeCommandMeow():
+    
+    r = sr.Recognizer()
+    with sr.Microphone() as source:
+        w.config(text = "Listening")
+        w.update()
+        print("Friday : Listening ...")
+        r.pause_threshold = 1
+        audio = r.listen(source)
+
+    try:
+        print("Friday : Recognizing ...")
+        query = r.recognize_google(audio, language='en-in')
         print('command :',query.title())
         w.config(text = 'Command  : '+query.title())
         w.update()
@@ -60,12 +82,20 @@ def takeCommand():
         return "None"
     return query
 
-    
 def everything():
     wish()
     while True:
-        query = takeCommand().lower()
+        query=takeCommand()
         
+        if query=="^":
+            w.config(text = "Yes Sir !")
+            w.update()
+            speak("Yes Sir")
+            query=takeCommandMeow()
+            
+        if "^" in query:
+            query=query.replace("^","")    
+                        
         if 'youtube' in query:
             query = query.replace("search youtube for", "")
             query = query.replace("search on youtube", "")
@@ -112,6 +142,14 @@ def everything():
                 w.config(text = 'City Not Found')
                 w.update()
                 speak("City Not Found")
+                
+        elif 'news' in query:
+            news_list = client.get_news()
+            for item in news_list:
+                st = item['title'].split(' - ', 1)[0]
+                w.config(text = st)
+                w.update()
+                speak(st)
 
         elif 'play music' in query:
             folder = 'c:/AssistantSongs'
@@ -203,22 +241,25 @@ def everything():
                 speak("Could not open")
                 
         elif 'shutdown' in query:
+            w.config(text = 'Shutting Down')
+            w.update()
+            speak("Shutting Down")
             os.system("shutdown -s")            
 
-        elif 'bye' in query:
+        elif 'bye' in query or 'exit' in query:
             w.config(text = 'Bella Ciao')
             w.update()
             speak("Bella Ciao")
+            root.destroy()
             exit(0)
 
         elif 'none' in query:
             continue
 
         else:
-            response = bot.get_response(query)
-            w.config(text = response)
+            w.config(text = "I Coudn't Understand You. Try Rephrasing Your Statement")
             w.update()
-            speak(response)
+            speak("I Coudnt Understand You. Try Rephrasing Your Statement")
 
 root = tk.Tk()
 root.attributes('-alpha',0.6)

@@ -5,24 +5,34 @@ import datetime
 import wikipedia
 import webbrowser
 import os
-import chatterbot
-from chatterbot.trainers import ChatterBotCorpusTrainer
 from wikipedia.wikipedia import languages
 import tkinter as tk
 import tkinter.font as tkf
 import requests, json
+from gnewsclient import gnewsclient
+import cv2
+import capture
+import pyscreenshot
+from pycaw.pycaw import AudioUtilities
+import schedule
+from youtube_search import YoutubeSearch
+from pytube import YouTube
+
+client = gnewsclient.NewsClient(language='english',location='india',max_results=3)
 
 engine = pyttsx3.init('sapi5')
 voices = engine.getProperty('voices')
-engine.setProperty('voice', voices[1].id)
-
-bot = chatterbot.ChatBot('Friday')
-trainer = ChatterBotCorpusTrainer(bot)
-trainer.train("chatterbot.corpus.english.conversations","chatterbot.corpus.english.greetings","chatterbot.corpus.english.trivia","chatterbot.corpus.english.ai")
+engine.setProperty('voice', voices[4].id)
 
 api_key = "5995f5e32100e6a622ffb2f0d088cb02"
 base_url = "http://api.openweathermap.org/data/2.5/weather?"
+def setevery(jobhisetkrnah):
+    w.config(text = jobhisetkrnah)
+    w.update()
+    speak(jobhisetkrnah)
+    
 
+    
 def speak(audio):
     engine.say(audio)
     engine.runAndWait()
@@ -38,34 +48,82 @@ def wish():
     else:
         speak("Good Evening")
 
-    speak("Friday at your Command Sir.")
+    speak("Artemis at your Command Sir.")
 
 def takeCommand():
 
     r = sr.Recognizer()
     with sr.Microphone() as source:
-        print("Friday : Listening ...")
+        print("Artemis : Listening ...")
         r.pause_threshold = 1
         audio = r.listen(source)
 
     try:
-        print("Friday : Recognizing ...")
+        print("Artemis : Recognizing ...")
+        query = r.recognize_google(audio, language='en-in')
+        query=query.lower()
+
+    except Exception as e:
+        return "none"
+    
+    if 'artemis' not in query:
+        return "none"
+    else:
+        query=query.replace("artemis ","^")
+        query=query.replace("artemis","^")
+        return query
+
+def takeCommandMeow():
+    
+    r = sr.Recognizer()
+    with sr.Microphone() as source:
+        w.config(text = "Listening")
+        w.update()
+        print("Artemis : Listening ...")
+        r.pause_threshold = 1
+        audio = r.listen(source)
+
+    try:
+        print("Artemis : Recognizing ...")
         query = r.recognize_google(audio, language='en-in')
         print('command :',query.title())
         w.config(text = 'Command  : '+query.title())
         w.update()
 
     except Exception as e:
-        print("Friday : Please Repeat ...")
+        print("Artemis : Please Repeat ...")
         return "None"
     return query
 
-    
+def takeCommandMeowAgain():
+    r = sr.Recognizer()
+    with sr.Microphone() as source:
+        r.pause_threshold = 1
+        audio = r.listen(source)
+
+    try:
+        query = r.recognize_google(audio, language='en-in')
+
+    except Exception as e:
+        return "None"
+    return query
+
 def everything():
     wish()
+    schedule.every().day.at("01:00").do(lambda:setevery("It is Quite Late Now, You Should Have Some Rest"))
     while True:
-        query = takeCommand().lower()
+        schedule.run_pending()
+        query=takeCommand()
         
+        if query=="^":
+            w.config(text = "Yes Sir !")
+            w.update()
+            speak("Yes Sir")
+            query=takeCommandMeow().lower()
+            
+        if "^" in query:
+            query=query.replace("^","")    
+                        
         if 'youtube' in query:
             query = query.replace("search youtube for", "")
             query = query.replace("search on youtube", "")
@@ -84,6 +142,34 @@ def everything():
             w.config(text = "Results are Shown in Browser")
             w.update()
             speak("These are some results")
+            
+        elif 'capture' in query or 'selfie' in query:
+            w.config(text = "Say Cheese, Hit Spacebar & Tell The Filename")
+            w.update()
+            speak("Say cheese, hit spacebar and tell the filename")
+            capture.cap()
+            setevery("Photo Saved Succesfully")
+            
+        elif 'screenshot' in query:
+            setevery("Taking Screenshot")
+            ss = pyscreenshot.grab()
+            ss.show()
+            setevery("Provide Filename")
+            filename=takeCommandMeowAgain().title()
+            os.chdir("C:\Everything\FRIDAY\Captures")
+            ss.save(filename+".png")
+            setevery("Screenshot Saved Succesfully")
+
+        elif 'dnd' in query:
+            if 'enable' in query or 'on' in query:
+                mutevalue=1
+            if 'disable' in query or 'off' in query:
+                mutevalue=0
+            sessions = AudioUtilities.GetAllSessions()
+            for session in sessions:
+                volume = session.SimpleAudioVolume
+                volume.SetMute(mutevalue, None)
+                setevery("DND Status Set Succesfully")
         
         elif 'what is the weather in' in query:
             query=query.replace("what is the weather in","")
@@ -112,14 +198,52 @@ def everything():
                 w.config(text = 'City Not Found')
                 w.update()
                 speak("City Not Found")
+                
+        elif 'news' in query:
+            news_list = client.get_news()
+            for item in news_list:
+                st = item['title'].split(' - ', 1)[0]
+                w.config(text = st)
+                w.update()
+                speak(st)
 
-        elif 'play music' in query:
-            folder = 'c:/AssistantSongs'
-            songs = os.listdir(folder)
-            w.config(text = 'Playing '+songs[0])
-            w.update()
-            speak("Playing Music")
-            os.startfile(os.path.join(folder, songs[0]))
+        elif 'play' in query and 'music' in query:
+            folder="C:\Everything\FRIDAY\Songs"
+            os.chdir(folder)
+            setevery("Do You Want To Play Existing Songs or Download New Ones")
+            query=takeCommandMeowAgain()
+            if 'download' in query:
+                setevery("Which Song Would You Like To Download")
+                query=takeCommandMeowAgain()
+                results = YoutubeSearch(query, max_results=3).to_dict()
+                setevery("Choose One of The Following")
+                for res in results:
+                    setevery(res['title'])
+                query=takeCommandMeowAgain()
+                if "second" in query:
+                    gaanano=1
+                elif "third" in query:
+                    gaanano=2
+                else:
+                    gaanano=0
+                linkgaana="https://www.youtube.com/watch?v="+results[gaanano]['id']
+                yt = YouTube(linkgaana)
+                video = yt.streams.filter(only_audio=True).first()
+                out_file = video.download(output_path=".")
+                base, ext = os.path.splitext(out_file)
+                new_file = base + '.mp3'
+                os.rename(out_file, new_file)
+                setevery("Succesfully Downloaded")
+                w.config(text = 'Playing '+results[gaanano]['title'])
+                w.update()
+                speak("Playing Music")
+                os.startfile(os.path.join(folder, new_file))
+            else:
+                songs = os.listdir(folder)
+                w.config(text = 'Playing '+songs[0])
+                w.update()
+                speak("Playing Music")
+                os.startfile(os.path.join(folder, songs[0]))
         
         elif 'suggest' in query:
             query = query.replace("suggest", "best")
@@ -203,22 +327,25 @@ def everything():
                 speak("Could not open")
                 
         elif 'shutdown' in query:
+            w.config(text = 'Shutting Down')
+            w.update()
+            speak("Shutting Down")
             os.system("shutdown -s")            
 
-        elif 'bye' in query:
+        elif 'bye' in query or 'exit' in query:
             w.config(text = 'Bella Ciao')
             w.update()
             speak("Bella Ciao")
+            root.destroy()
             exit(0)
 
         elif 'none' in query:
             continue
 
         else:
-            response = bot.get_response(query)
-            w.config(text = response)
+            w.config(text = "I Coudn't Understand You. Try Rephrasing Your Statement")
             w.update()
-            speak(response)
+            speak("I Coudnt Understand You. Try Rephrasing Your Statement")
 
 root = tk.Tk()
 root.attributes('-alpha',0.6)
@@ -227,9 +354,7 @@ root.overrideredirect(1)
 root.geometry('300x150-20+20')
 filename = tk.PhotoImage(file = "c:/meow.gif")
 fs=tkf.Font(family='Impact',size=11)
-w = tk.Label(root, text="Friday At Your Command Sir !",pady=50,wraplength=200,image=filename,compound=CENTER,font=fs,foreground='white')
+w = tk.Label(root, text="Artemis At Your Command Sir !",pady=50,wraplength=200,image=filename,compound=CENTER,font=fs,foreground='white')
 w.pack()
 root.after(100,everything)
 root.mainloop()
-
-
