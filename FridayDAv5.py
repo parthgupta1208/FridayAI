@@ -438,4 +438,3 @@ w = tk.Label(root, text="Friday At Your Command Sir !",pady=50,wraplength=200,im
 w.pack()
 root.after(100,everything)
 root.mainloop()
-print("HI")
