@@ -26,7 +26,7 @@ client = gnewsclient.NewsClient(language='english',location='india',max_results=
 
 engine = pyttsx3.init('sapi5')
 voices = engine.getProperty('voices')
-engine.setProperty('voice', voices[4].id)
+engine.setProperty('voice', voices[1].id)
 
 config = {
     'host': 'identify-eu-west-1.acrcloud.com',
@@ -168,7 +168,7 @@ def everything():
             ss.show()
             setevery("Provide Filename")
             filename=takeCommandMeowAgain().title()
-            os.chdir("C:\Everything\FRIDAY\Captures")
+            os.chdir("FridayAI\Captures")
             ss.save(filename+".png")
             setevery("Screenshot Saved Succesfully")
 
@@ -220,7 +220,7 @@ def everything():
                 speak(st)
 
         elif 'play' in query and ('music' in query or 'songs' in query or 'song' in query):
-            folder="C:\Everything\FRIDAY\Songs"
+            folder="FridayAI\Songs"
             os.chdir(folder)
             setevery("Do You Want To Play Existing Songs or Download New Ones")
             query=takeCommandMeowAgain()
@@ -432,7 +432,7 @@ root.attributes('-alpha',0.6)
 root.attributes('-topmost', True)
 root.overrideredirect(1)
 root.geometry('300x150-20+20')
-filename = tk.PhotoImage(file = "c:/meow.gif")
+filename = tk.PhotoImage(file = "FridayAI/meow.gif")
 fs=tkf.Font(family='Impact',size=11)
 w = tk.Label(root, text="Friday At Your Command Sir !",pady=50,wraplength=200,image=filename,compound=CENTER,font=fs,foreground='white')
 w.pack()
